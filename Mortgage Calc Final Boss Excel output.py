@@ -74,6 +74,7 @@ def get_next_filename():
 
 def save_results_to_excel(loan_amount, loan_details, down_payment_options, check_in_years):
     filename = get_next_filename()
+    print(f"Saving Excel file to: {filename}")  # Add this line to print the file path
     workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
 
