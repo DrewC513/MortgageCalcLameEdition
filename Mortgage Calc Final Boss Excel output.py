@@ -44,30 +44,81 @@ def get_next_filename():
         counter += 1
     return f"{base_filename}_{counter}{extension}"
 
+def excel_column_letter(index):
+    """
+    Convert a zero-indexed column number to a column letter (A-Z, AA-AZ, ...).
+    """
+    letter = ''
+    while index > 0:
+        index, remainder = divmod(index - 1, 26)
+        letter = chr(65 + remainder) + letter
+    return letter or 'A'
+
 def save_results_to_excel(loan_amount, loan_details, down_payment_options, check_in_years):
     filename = get_next_filename()
     workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
 
-    # Header Format
+    # Formats
     header_format = workbook.add_format({'bold': True, 'bg_color': 'yellow', 'border': 1})
-    money_format = workbook.add_format({'num_format': '$#,##0.00', 'border': 1})
-    percent_format = workbook.add_format({'num_format': '0.00%', 'border': 1})
+    sub_header_format = workbook.add_format({'bold': True, 'bg_color': '#DDEBF7', 'border': 1})
+    check_in_year_format = workbook.add_format({'bg_color': '#E2EFDA', 'border': 1})  # Green fill for check-in years
+    money_format = workbook.add_format({'num_format': '$#,##0.00', 'border': 1})    
 
-    # Headers
-    headers = ['Loan Term (Years)', 'Interest Rate', 'Down Payment %', 'Monthly Payment', 'Total Interest Paid', 'Total Paid Over Life']
-    for year in check_in_years:
-        headers.extend([f'Principal Paid by Year {year}', f'Interest Paid by Year {year}', f'Total Payment by Year {year}', f'Principal Remaining after Year {year}'])
-    worksheet.write_row(0, 0, headers, header_format)
+    # Top Header - Calculate the range based on number of columns
+    num_fixed_headers = 4
+    num_check_in_columns = len(check_in_years) * 4
+    num_total_columns = num_fixed_headers + num_check_in_columns + len(['Total Interest Paid', 'Total Principal Paid', 'Total Paid Over Life'])
+    top_header_range = f'A1:{excel_column_letter(num_total_columns)}1'
+    worksheet.merge_range(top_header_range, f"Loan Amount: ${loan_amount:,.2f}", header_format)
 
-    row = 1
+    # Fixed Headers
+    fixed_headers = ['Term (Years)', 'Interest Rate', 'Down Payment %', 'Monthly Payment']
+    worksheet.write_row('A2', fixed_headers, header_format)
+
+    # Check-in Year Headers
+    for i, check_in_year in enumerate(check_in_years):
+        col_offset = num_fixed_headers + i * 4
+        start_col_letter = excel_column_letter(col_offset)
+        end_col_letter = excel_column_letter(col_offset + 3)
+        worksheet.merge_range(f'{start_col_letter}2:{end_col_letter}2', f'{check_in_year} Year Mark', sub_header_format)
+
+        check_in_headers = [
+            f'Principal Paid {check_in_year} yr',
+            f'Interest {check_in_year} yr',
+            f'Total Payment {check_in_year} yr',
+            f'Loan Left {check_in_year} yr'
+        ]
+        worksheet.write_row(f'{start_col_letter}3', check_in_headers, sub_header_format)
+
+    # Totals Headers - Start after the check-in year columns
+    totals_start_col = excel_column_letter(num_fixed_headers + num_check_in_columns)
+    totals_headers = ['Total Interest Paid', 'Total Principal Paid', 'Total Paid Over Life']
+    worksheet.write_row(f'{totals_start_col}2', totals_headers, header_format)
+
+    # Write data
+    row = 3  # Start from row 3 to account for the headers
     for detail in loan_details:
         for down_payment in down_payment_options:
             result = calculate_mortgage_details(loan_amount, detail['interest_rate'], detail['years'], down_payment, check_in_years)
-            data = [detail['years'], detail['interest_rate'], down_payment, result['monthly_payment'], result['total_interest_paid'], result['total_paid_over_life']]
-            for check_in_detail in result['check_in_details']:
-                data.extend([check_in_detail['principal_paid_until_check_in'], check_in_detail['interest_paid_until_check_in'], check_in_detail['total_paid_until_check_in'], check_in_detail['principal_remaining']])
+            data = [detail['years'], detail['interest_rate'], down_payment, result['monthly_payment']]
             worksheet.write_row(row, 0, data, money_format)
+
+            # Write check-in years data with specific formatting
+            for i, check_in_detail in enumerate(result['check_in_details']):
+                col_offset = num_fixed_headers + i * 4
+                check_in_data = [
+                    check_in_detail['principal_paid_until_check_in'],
+                    check_in_detail['interest_paid_until_check_in'],
+                    check_in_detail['total_paid_until_check_in'],
+                    check_in_detail['principal_remaining']
+                ]
+                for col, value in enumerate(check_in_data, start=col_offset):
+                    worksheet.write_number(row, col, value, check_in_year_format if i < len(check_in_years) else money_format)
+
+            totals_data = [result['total_interest_paid'], detail['years'] * loan_amount, result['total_paid_over_life']]
+            for col, value in enumerate(totals_data, start=num_fixed_headers + num_check_in_columns):
+                worksheet.write_number(row, col, value, money_format)
             row += 1
 
     workbook.close()
