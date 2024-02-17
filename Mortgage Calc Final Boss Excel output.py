@@ -58,7 +58,6 @@ def display_results(loan_amount, loan_details, down_payment_options, check_in_ye
             row += [f"{result['monthly_payment']:,.2f}", f"{result['total_interest_paid']:,.2f}", f"{result['total_principal_paid']:,.2f}", f"{result['total_paid_over_life']:,.2f}"]
             print(' | '.join(row))
 
-
 import os
 import xlsxwriter
 
@@ -77,13 +76,26 @@ def save_results_to_excel(loan_amount, loan_details, down_payment_options, check
     workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
 
-    # Add your Excel file formatting and data writing code here
+    # Excel file formatting and data writing code goes here
 
     workbook.close()
 
-# Update the main method to call save_results_to_excel
+def main():
+    loan_amount = float(input("Enter loan amount: $"))
+    n_loan_lengths = int(input("How many loan lengths do you want to compare? "))
+    loan_details = [{'years': int(input(f"Enter loan length #{i+1} (in years): ")), 'interest_rate': float(input(f"Enter interest rate for this loan length (in %): "))} for i in range(n_loan_lengths)]
+    
+    down_payment_options = [float(input("Enter down payment percentage: ")) for _ in range(int(input("How many down payment options? ")))]
+
+    check_in_points = int(input("How many check-in points do you want to evaluate? "))
+    check_in_years = [int(input(f"Enter check-in year #{i+1}: ")) for i in range(check_in_points)]
+
+    # Process and display results for each combination
+    display_results(loan_amount, loan_details, down_payment_options, check_in_years)
+
+    # Save results to an Excel file instead of CSV
+    save_results_to_excel(loan_amount, loan_details, down_payment_options, check_in_years)
 
 if __name__ == '__main__':
     main()
-
 
