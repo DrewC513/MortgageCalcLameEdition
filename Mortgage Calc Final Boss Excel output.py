@@ -58,45 +58,32 @@ def display_results(loan_amount, loan_details, down_payment_options, check_in_ye
             row += [f"{result['monthly_payment']:,.2f}", f"{result['total_interest_paid']:,.2f}", f"{result['total_principal_paid']:,.2f}", f"{result['total_paid_over_life']:,.2f}"]
             print(' | '.join(row))
 
-import csv
 
-def save_results_to_csv(loan_amount, loan_details, down_payment_options, check_in_years):
-    with open('mortgage_results.csv', mode='w', newline='') as file:
-        writer = csv.writer(file)
-        
-        # Write header row
-        headers = ['Loan Term (Years)', 'Interest Rate (%)', 'Down Payment (%)', 'Down Payment Amount ($)']
-        for year in check_in_years:
-            headers += [f'Principal Paid by Year {year} ($)', f'Interest Paid by Year {year} ($)', f'Total Payment by Year {year} ($)', f'Principal Remaining after Year {year} ($)']
-        headers += ['Monthly Payment ($)', 'Total Interest Paid ($)', 'Total Principal Paid ($)', 'Total Paid Over Life ($)']
-        writer.writerow(headers)
-        
-        # Write data rows
-        for detail in loan_details:
-            for down_payment in down_payment_options:
-                result = calculate_mortgage_details(loan_amount, detail['interest_rate'], detail['years'], down_payment, check_in_years)
-                row = [f"{detail['years']}", f"{detail['interest_rate']}%", f"{down_payment}%", f"{result['check_in_details'][0]['down_payment_amount']:,.2f}"]
-                for check_in_detail in result['check_in_details']:
-                    row += [f"{check_in_detail['principal_paid_until_check_in']:,.2f}", f"{check_in_detail['interest_paid_until_check_in']:,.2f}", f"{check_in_detail['total_paid_until_check_in']:,.2f}", f"{check_in_detail['principal_remaining']:,.2f}"]
-                row += [f"{result['monthly_payment']:,.2f}", f"{result['total_interest_paid']:,.2f}", f"{result['total_principal_paid']:,.2f}", f"{result['total_paid_over_life']:,.2f}"]
-                writer.writerow(row)
+import os
+import xlsxwriter
 
-def main():
-    loan_amount = float(input("Enter loan amount: $"))
-    n_loan_lengths = int(input("How many loan lengths do you want to compare? "))
-    loan_details = [{'years': int(input(f"Enter loan length #{i+1} (in years): ")), 'interest_rate': float(input(f"Enter interest rate for this loan length (in %): "))} for i in range(n_loan_lengths)]
-    
-    down_payment_options = [float(input("Enter down payment percentage: ")) for _ in range(int(input("How many down payment options? ")))]
+def get_next_filename():
+    base_filename = 'Mortgage_results'
+    extension = '.xlsx'
+    counter = 1
+    while True:
+        new_filename = f"{base_filename}_{counter}{extension}"
+        if not os.path.isfile(new_filename):
+            return new_filename
+        counter += 1
 
-    check_in_points = int(input("How many check-in points do you want to evaluate? "))
-    check_in_years = [int(input(f"Enter check-in year #{i+1}: ")) for i in range(check_in_points)]
+def save_results_to_excel(loan_amount, loan_details, down_payment_options, check_in_years):
+    filename = get_next_filename()
+    workbook = xlsxwriter.Workbook(filename)
+    worksheet = workbook.add_worksheet()
 
-    # Process and display results for each combination
-    display_results(loan_amount, loan_details, down_payment_options, check_in_years)
-    
-    # Call save_results_to_csv function to save results to CSV
-    save_results_to_csv(loan_amount, loan_details, down_payment_options, check_in_years)
+    # Add your Excel file formatting and data writing code here
 
-if __name__ == "__main__":
+    workbook.close()
+
+# Update the main method to call save_results_to_excel
+
+if __name__ == '__main__':
     main()
+
 
