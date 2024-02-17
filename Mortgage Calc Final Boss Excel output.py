@@ -81,6 +81,19 @@ def save_results_to_excel(loan_amount, loan_details, down_payment_options, check
 
     workbook.close()
 
+def main():
+    loan_amount = float(input("Enter loan amount: $"))
+    n_loan_lengths = int(input("How many loan lengths do you want to compare? "))
+    loan_details = [{'years': int(input(f"Enter loan length #{i+1} (in years): ")), 'interest_rate': float(input(f"Enter interest rate for this loan length (in %): "))} for i in range(n_loan_lengths)]
+    
+    down_payment_options = [float(input("Enter down payment percentage: ")) for _ in range(int(input("How many down payment options? ")))]
+    
+    check_in_points = int(input("How many check-in points do you want to evaluate? "))
+    check_in_years = [int(input(f"Enter check-in year #{i+1}: ")) for i in range(check_in_points)]
+    
+    # Process and display results for each combination
+    display_results(loan_amount, loan_details, down_payment_options, check_in_years)
+  
 # Update the main method to call save_results_to_excel
 
 if __name__ == '__main__':
