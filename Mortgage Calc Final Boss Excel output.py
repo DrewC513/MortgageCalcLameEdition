@@ -70,17 +70,20 @@ def get_next_filename():
         if not os.path.isfile(new_filename):
             return new_filename
         counter += 1
+print("Calling save_results_to_excel") 
 
 def save_results_to_excel(loan_amount, loan_details, down_payment_options, check_in_years):
     filename = get_next_filename()
     print(f"Saving Excel file to: {filename}")  # Add this line to print the file path
     workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
-
+    print("Finished calling save_results_to_excel")
     # Excel file formatting and data writing code goes here
 
     workbook.close()
+
 def main():
+    print("Starting main function")
     loan_amount = float(input("Enter loan amount: $"))
     n_loan_lengths = int(input("How many loan lengths do you want to compare? "))
     loan_details = [{'years': int(input(f"Enter loan length #{i+1} (in years): ")), 'interest_rate': float(input(f"Enter interest rate for this loan length (in %): "))} for i in range(n_loan_lengths)]
@@ -91,9 +94,10 @@ def main():
     check_in_years = [int(input(f"Enter check-in year #{i+1}: ")) for i in range(check_in_points)]
 
     # Process and display results for each combination
+    save_results_to_excel(loan_amount, loan_details, down_payment_options, check_in_years)
     display_results(loan_amount, loan_details, down_payment_options, check_in_years)
-    
-# Update the main method to call save_results_to_excel
+    print("Finished main function")
+    # Update the main method to call save_results_to_excel
 
 if __name__ == '__main__':
     main()
