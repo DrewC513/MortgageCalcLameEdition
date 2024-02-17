@@ -58,47 +58,64 @@ def display_results(loan_amount, loan_details, down_payment_options, check_in_ye
             row += [f"{result['monthly_payment']:,.2f}", f"{result['total_interest_paid']:,.2f}", f"{result['total_principal_paid']:,.2f}", f"{result['total_paid_over_life']:,.2f}"]
             print(' | '.join(row))
 
-import os
 import xlsxwriter
+import os
+import random
 
-def get_next_filename():
-    base_filename = 'Mortgage_results'
-    extension = '.xlsx'
-    counter = 1
-    while True:
-        new_filename = f"{base_filename}_{counter}{extension}"
-        if not os.path.isfile(new_filename):
-            return new_filename
-        counter += 1
-print("Calling save_results_to_excel") 
+def get_random_color():
+    return "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
 
 def save_results_to_excel(loan_amount, loan_details, down_payment_options, check_in_years):
     filename = get_next_filename()
-    print(f"Saving Excel file to: {filename}")  # Add this line to print the file path
     workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
-    print("Finished calling save_results_to_excel")
-    # Excel file formatting and data writing code goes here
+
+    # Formats
+    header_format = workbook.add_format({
+        'bold': True,
+        'align': 'center',
+        'valign': 'vcenter',
+        'fg_color': '#FFEB9C',
+        'border': 1
+    })
+    money_format = workbook.add_format({'num_format': '$#,##0.00', 'border': 1})
+    percent_format = workbook.add_format({'num_format': '0%', 'border': 1})
+    bold = workbook.add_format({'bold': True, 'border': 1})
+    
+    # Write the fixed headers
+    fixed_headers = ['Term', 'Interest', 'Down Payment', 'Monthly Mortgage']
+    worksheet.write_row('A1', fixed_headers, header_format)
+
+    # Add check-in times headers with random colors
+    check_in_headers = []
+    for check_in_year in check_in_years:
+        color = get_random_color()
+        check_in_format = workbook.add_format({'bg_color': color, 'border': 1})
+        check_in_headers.extend([
+            f'Principal Paid {check_in_year}', f'Interest {check_in_year}',
+            f'All Pays {check_in_year}', f'Loan Left {check_in_year}'
+        ])
+        for i in range(4):  # Four headers per check-in year
+            worksheet.write(0, len(fixed_headers) + i + (len(check_in_years) - 1) * 4, check_in_headers[i + (check_in_year - 1) * 4], check_in_format)
+
+    # Assuming 'loan_details' is a list of dictionaries with keys matching these headers
+    row = 1
+    for detail in loan_details:
+        # Example of data list, replace with actual data from 'detail'
+        data = [
+            detail['loan_term_years'],
+            detail['interest_rate'],
+            # ... add other fields from the 'detail' dictionary
+        ]
+        # Write data with formats
+        worksheet.write(row, 0, data[0], bold)  # Term, assuming it's an integer
+        worksheet.write(row, 1, data[1], percent_format)  # Interest
+        # ... write other data cells with appropriate formats
+        row += 1
 
     workbook.close()
+    print(f"Saved Excel file to: {filename}")
 
-def main():
-    print("Starting main function")
-    loan_amount = float(input("Enter loan amount: $"))
-    n_loan_lengths = int(input("How many loan lengths do you want to compare? "))
-    loan_details = [{'years': int(input(f"Enter loan length #{i+1} (in years): ")), 'interest_rate': float(input(f"Enter interest rate for this loan length (in %): "))} for i in range(n_loan_lengths)]
-    
-    down_payment_options = [float(input("Enter down payment percentage: ")) for _ in range(int(input("How many down payment options? ")))]
+# ... (rest of your code)
 
-    check_in_points = int(input("How many check-in points do you want to evaluate? "))
-    check_in_years = [int(input(f"Enter check-in year #{i+1}: ")) for i in range(check_in_points)]
-
-    # Process and display results for each combination
-    save_results_to_excel(loan_amount, loan_details, down_payment_options, check_in_years)
-    display_results(loan_amount, loan_details, down_payment_options, check_in_years)
-    print("Finished main function")
-    # Update the main method to call save_results_to_excel
-
-if __name__ == '__main__':
-    main()
 
