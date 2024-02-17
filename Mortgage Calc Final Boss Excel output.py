@@ -98,9 +98,24 @@ def save_results_to_excel(loan_amount, loan_details, down_payment_options, check
         for i in range(4):  # Four headers per check-in year
             worksheet.write(0, len(fixed_headers) + i + (len(check_in_years) - 1) * 4, check_in_headers[i + (check_in_year - 1) * 4], check_in_format)
 
-    # Assuming 'loan_details' is a list of dictionaries with keys matching these headers
+    # Write data to Excel
     row = 1
     for detail in loan_details:
+        data = [
+            detail['loan_term_years'],
+            detail['interest_rate'],
+            # Extract other fields from the 'detail' dictionary and format as needed
+        ]
+        # Write the row of data to Excel, applying formats
+        worksheet.write_row(f'A{row + 1}', data, money_format)
+        row += 1
+
+    workbook.close()
+    print(f"Saved Excel file to: {filename}")
+
+# ... (rest of your code)
+
+
         # Example of data list, replace with actual data from 'detail'
         data = [
             detail['loan_term_years'],
